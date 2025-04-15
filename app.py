@@ -94,7 +94,7 @@ with st.form("prediction_form"):
     col1, col2 = st.columns(2)
     
     with col1:
-        age = st.number_input("Age", min_value=18, max_value=100, value=30)
+        age = st.number_input("Tenure Months", min_value=18, max_value=100, value=30)
         gender = st.selectbox("Gender", options=["Male", "Female"])
         support_calls = st.number_input("Number of Support Calls", min_value=0, value=0)
         payment_delay = st.number_input("Payment Delay (days)", min_value=0, value=0)
