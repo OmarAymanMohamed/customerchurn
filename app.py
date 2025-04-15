@@ -2,14 +2,22 @@ import streamlit as st
 import pandas as pd
 from joblib import load
 import numpy as np
+import os
 
-# Load the models
+# Load the models with better error handling
 @st.cache_resource
 def load_models():
-    model = load("svm_churn_model2.joblib")
-    scaler = load("scaler2.joblib")
-    pca_model = load("pca_reduce2.joblib")
-    return model, scaler, pca_model
+    try:
+        model = load("svm_churn_model2.joblib")
+        scaler = load("scaler2.joblib")
+        pca_model = load("pca_reduce2.joblib")
+        return model, scaler, pca_model
+    except Exception as e:
+        st.error(f"Error loading models: {e}")
+        st.info("Please check if model files exist in the repository.")
+        # List files in current directory for debugging
+        st.write("Files in current directory:", os.listdir())
+        return None, None, None
 
 def transform_categorical(df):
     df_encoded = df.copy()
@@ -25,11 +33,20 @@ def transform_categorical(df):
     # Reordering columns to fit the model correctly
     order_of_columns = ['Age', 'Support Calls', 'Payment Delay', 'Total Spend', 'Last Interaction', 
                        'Gender_Male', 'Contract Length_Monthly', 'Contract Length_Quarterly']
+    
+    # Ensure all required columns exist
+    for col in order_of_columns:
+        if col not in df_encoded.columns:
+            df_encoded[col] = 0.0
+            
     df_encoded = df_encoded[order_of_columns]
     
     return df_encoded
 
 def predict_churn_pca(model, scaler, pca_model, data):
+    if model is None or scaler is None or pca_model is None:
+        return None
+        
     try:
         scaled_data = scaler.transform(data)
         pca_data = pca_model.transform(scaled_data)
@@ -37,6 +54,7 @@ def predict_churn_pca(model, scaler, pca_model, data):
         return prediction[0]
     except Exception as e:
         st.error(f"Error during prediction: {e}")
+        st.info("Try restarting the app or check for model compatibility issues.")
         return None
 
 # Page config
@@ -55,6 +73,10 @@ Please fill in the customer information below to get a prediction.
 
 # Load models
 model, scaler, pca_model = load_models()
+
+# Display a message if models failed to load
+if model is None:
+    st.warning("⚠️ Models failed to load. Some features may not work correctly.")
 
 # Create form
 with st.form("prediction_form"):
@@ -108,6 +130,8 @@ if submitted:
             - Consider upsell opportunities
             - Monitor for any changes in behavior
             """)
+    else:
+        st.error("Unable to make prediction. Please check the logs for details.")
 
 # Add information about the model
 with st.expander("About the Model"):
