@@ -4,6 +4,13 @@ from joblib import load
 import numpy as np
 import os
 
+# Page config must be the first Streamlit command
+st.set_page_config(
+    page_title="Customer Churn Prediction",
+    page_icon="🔄",
+    layout="wide"
+)
+
 # Hide Streamlit's default menu and footer
 hide_streamlit_style = """
 <style>
@@ -67,13 +74,6 @@ def predict_churn_pca(model, scaler, pca_model, data):
         st.error(f"Error during prediction: {e}")
         st.info("Try restarting the app or check for model compatibility issues.")
         return None
-
-# Page config
-st.set_page_config(
-    page_title="Customer Churn Prediction",
-    page_icon="🔄",
-    layout="wide"
-)
 
 # Title
 st.title("Customer Churn Prediction")
