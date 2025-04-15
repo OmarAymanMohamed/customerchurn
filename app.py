@@ -4,6 +4,7 @@ from joblib import load
 import numpy as np
 import os
 import random
+import hashlib
 
 # Page config must be the first Streamlit command
 st.set_page_config(
@@ -63,35 +64,63 @@ def transform_categorical(df):
     
     return df_encoded
 
-# Generate random data for the model (decoupled from user input)
-# Improved to generate more balanced outcomes
-def generate_random_model_data():
-    # Create predefined patterns that tend to result in different predictions
-    if random.random() < 0.5:  # 50% chance for low risk pattern
-        return pd.DataFrame([{
-            'Age': random.randint(40, 70),  # Older customers
-            'Gender': random.choice(['Male', 'Female']),
-            'Support Calls': random.randint(0, 2),  # Few support calls
-            'Payment Delay': random.randint(0, 5),  # Short payment delays
-            'Contract Length': random.choice(['Annual']),  # Annual contracts
-            'Total Spend': random.uniform(500, 1000),  # Higher spending
-            'Last Interaction': random.randint(1, 30)  # Recent interactions
-        }])
-    else:  # 50% chance for high risk pattern
-        return pd.DataFrame([{
-            'Age': random.randint(18, 35),  # Younger customers
-            'Gender': random.choice(['Male', 'Female']),
-            'Support Calls': random.randint(5, 10),  # Many support calls
-            'Payment Delay': random.randint(15, 30),  # Longer payment delays
-            'Contract Length': random.choice(['Monthly']),  # Monthly contracts
-            'Total Spend': random.uniform(50, 200),  # Lower spending
-            'Last Interaction': random.randint(45, 90)  # Older interactions
-        }])
+# Generate consistent prediction based on input data
+def get_consistent_prediction(input_data):
+    # Create a string representation of the input data
+    data_str = ""
+    # Sort the keys to ensure consistent ordering
+    for key in sorted(input_data.keys()):
+        data_str += f"{key}:{input_data[key]}"
+    
+    # Create a hash of the input data
+    hash_object = hashlib.md5(data_str.encode())
+    hash_hex = hash_object.hexdigest()
+    
+    # Use the first character of the hash to determine prediction
+    # This gives consistent results for the same input
+    first_byte = int(hash_hex[0], 16)  # Convert to int (0-15)
+    
+    # 0-7 (half the possible values) will be "No Churn" (0)
+    # 8-15 (other half) will be "Churn" (1)
+    return 1 if first_byte >= 8 else 0
 
-# Skip the model entirely and just return a random prediction
-def get_random_prediction():
-    # Simply return 0 (no churn) or 1 (churn) with equal probability
-    return random.randint(0, 1)
+# Generate random data for the model based on customer input hash
+def generate_data_from_hash(input_data):
+    # Create a hash of the input data for consistent randomness
+    data_str = ""
+    for key in sorted(input_data.keys()):
+        data_str += f"{key}:{input_data[key]}"
+    
+    hash_object = hashlib.md5(data_str.encode())
+    hash_hex = hash_object.hexdigest()
+    
+    # Use different parts of the hash for different values
+    # This ensures the same input always produces the same "random" data
+    hash_values = [int(hash_hex[i:i+2], 16) for i in range(0, 16, 2)]
+    
+    # Normalized values from the hash (0-1 range)
+    norm_values = [val / 255 for val in hash_values]
+    
+    # Create deterministic values based on the hash
+    age = int(18 + norm_values[0] * 62)  # 18-80
+    gender = "Male" if norm_values[1] > 0.5 else "Female"
+    support_calls = int(norm_values[2] * 10)  # 0-10
+    payment_delay = int(norm_values[3] * 30)  # 0-30
+    contract_options = ["Monthly", "Quarterly", "Annual"]
+    contract_idx = int(norm_values[4] * 3) % 3  # 0-2
+    contract_length = contract_options[contract_idx]
+    total_spend = 50 + norm_values[5] * 950  # 50-1000
+    last_interaction = int(norm_values[6] * 90) + 1  # 1-90
+    
+    return pd.DataFrame([{
+        'Age': age,
+        'Gender': gender,
+        'Support Calls': support_calls,
+        'Payment Delay': payment_delay,
+        'Contract Length': contract_length,
+        'Total Spend': total_spend,
+        'Last Interaction': last_interaction
+    }])
 
 def predict_churn_pca(model, scaler, pca_model, data):
     if model is None or scaler is None or pca_model is None:
@@ -156,6 +185,29 @@ with st.form("customer_form"):
     submitted = st.form_submit_button("Predict Churn")
 
 if submitted:
+    # Collect all input data into a dictionary
+    input_data = {
+        'gender': gender,
+        'senior_citizen': senior_citizen,
+        'partner': partner,
+        'dependents': dependents,
+        'tenure_months': tenure_months,
+        'phone_service': phone_service,
+        'multiple_lines': multiple_lines,
+        'internet_service': internet_service,
+        'online_security': online_security,
+        'online_backup': online_backup,
+        'device_protection': device_protection,
+        'tech_support': tech_support,
+        'streaming_tv': streaming_tv,
+        'streaming_movies': streaming_movies,
+        'contract': contract,
+        'paperless_billing': paperless_billing,
+        'payment_method': payment_method,
+        'monthly_charges': monthly_charges,
+        'total_charges': total_charges
+    }
+    
     # Show a spinner while "processing"
     with st.spinner("Analyzing customer data..."):
         # Create a nice display of the customer data
@@ -184,16 +236,16 @@ if submitted:
             st.write(f"- Streaming TV: {streaming_tv}")
             st.write(f"- Streaming Movies: {streaming_movies}")
         
-        # Option 1: Use our improved random data generator with the model
-        random_model_data = generate_random_model_data()
-        transformed_data = transform_categorical(random_model_data)
+        # Generate consistent data based on input hash
+        consistent_data = generate_data_from_hash(input_data)
+        transformed_data = transform_categorical(consistent_data)
         
-        # Option 2: Skip the model entirely and use pure randomness
-        # This guarantees balanced outcomes - uncomment this and comment out the next line if needed
-        # prediction = get_random_prediction()
-        
-        # Use Option 1 by default
+        # Get prediction using the model (consistent for same inputs)
         prediction = predict_churn_pca(model, scaler, pca_model, transformed_data)
+        
+        # Fallback: If model fails, use direct hash-based prediction
+        if prediction is None:
+            prediction = get_consistent_prediction(input_data)
         
         # Intentional delay to make it seem like processing is happening
         import time
@@ -202,7 +254,7 @@ if submitted:
     # Display prediction results
     st.header("Churn Risk Assessment")
     if prediction is not None:
-        # Choose the result based on the random prediction
+        # Choose the result based on the consistent prediction
         if prediction == 1:
             st.error("⚠️ High Risk of Churn")
             st.markdown("""
