@@ -4,6 +4,17 @@ from joblib import load
 import numpy as np
 import os
 
+# Hide Streamlit's default menu and footer
+hide_streamlit_style = """
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+.stDeployButton {display:none;}
+header {visibility: hidden;}
+</style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # Load the models with better error handling
 @st.cache_resource
 def load_models():
