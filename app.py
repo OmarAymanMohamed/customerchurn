@@ -250,8 +250,9 @@ Please fill in the customer information below to get a prediction.
 
 # Add team members below the title
 st.markdown("""
-<div style="text-align: center; margin-bottom: 25px;">
-    <p><em>Developed by: Zeyad Sami Tahoun, Ahmed Reda, Saif Mohamed, Hager Essa, Doha Sayed</em></p>
+<div style="text-align: center; margin: 20px 0 30px 0; padding: 15px; background-color: #f0f2f6; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <p style="font-size: 18px; font-weight: bold; margin-bottom: 5px;">Development Team</p>
+    <p style="font-size: 16px; color: #0066cc;"><em>Zeyad Sami Tahoun • Ahmed Reda • Saif Mohamed • Hager Essa • Doha Sayed</em></p>
 </div>
 """, unsafe_allow_html=True)
 
