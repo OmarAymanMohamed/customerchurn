@@ -13,13 +13,39 @@ st.set_page_config(
     layout="wide"
 )
 
-# Hide Streamlit's default menu and footer
+# Hide ALL Streamlit and GitHub elements with more comprehensive CSS
 hide_streamlit_style = """
 <style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-.stDeployButton {display:none;}
-header {visibility: hidden;}
+/* Hide main menu and Streamlit footer */
+#MainMenu {visibility: hidden !important;}
+footer {visibility: hidden !important; display: none !important;}
+
+/* Hide deploy button */
+.stDeployButton {display: none !important;}
+
+/* Hide header decoration */
+header {visibility: hidden !important;}
+
+/* Hide GitHub corner button and any other corner elements */
+.viewerBadge_container__r5tak {display: none !important;}
+.styles_viewerBadge__1yB5_{display: none !important;}
+.viewerBadge_link__1S137 {display: none !important;}
+.viewerBadge_text__1JaDK {display: none !important;}
+.stGithubLink {display: none !important;}
+
+/* Hide any other Streamlit branding */
+.stToolbar {display: none !important;}
+.stDecoration {display: none !important;}
+div[data-testid="stDecoration"] {display: none !important;}
+div[data-testid="stToolbar"] {display: none !important;}
+
+/* Additional selectors to catch any footer or GitHub corner elements */
+.css-1lsmgbg {display: none !important;}  /* Common footer class */
+.css-1avcm0n {display: none !important;}  /* Common GitHub corner class */
+.css-18eg496 {display: none !important;}  /* Another footer element */
+
+/* Last resort - hide anything with the GitHub username */
+a[href*="github.com/OmarAymanMohamed"] {display: none !important;}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
