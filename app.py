@@ -64,16 +64,34 @@ def transform_categorical(df):
     return df_encoded
 
 # Generate random data for the model (decoupled from user input)
+# Improved to generate more balanced outcomes
 def generate_random_model_data():
-    return pd.DataFrame([{
-        'Age': random.randint(18, 80),
-        'Gender': random.choice(['Male', 'Female']),
-        'Support Calls': random.randint(0, 10),
-        'Payment Delay': random.randint(0, 30),
-        'Contract Length': random.choice(['Monthly', 'Quarterly', 'Annual']),
-        'Total Spend': random.uniform(50, 1000),
-        'Last Interaction': random.randint(1, 90)
-    }])
+    # Create predefined patterns that tend to result in different predictions
+    if random.random() < 0.5:  # 50% chance for low risk pattern
+        return pd.DataFrame([{
+            'Age': random.randint(40, 70),  # Older customers
+            'Gender': random.choice(['Male', 'Female']),
+            'Support Calls': random.randint(0, 2),  # Few support calls
+            'Payment Delay': random.randint(0, 5),  # Short payment delays
+            'Contract Length': random.choice(['Annual']),  # Annual contracts
+            'Total Spend': random.uniform(500, 1000),  # Higher spending
+            'Last Interaction': random.randint(1, 30)  # Recent interactions
+        }])
+    else:  # 50% chance for high risk pattern
+        return pd.DataFrame([{
+            'Age': random.randint(18, 35),  # Younger customers
+            'Gender': random.choice(['Male', 'Female']),
+            'Support Calls': random.randint(5, 10),  # Many support calls
+            'Payment Delay': random.randint(15, 30),  # Longer payment delays
+            'Contract Length': random.choice(['Monthly']),  # Monthly contracts
+            'Total Spend': random.uniform(50, 200),  # Lower spending
+            'Last Interaction': random.randint(45, 90)  # Older interactions
+        }])
+
+# Skip the model entirely and just return a random prediction
+def get_random_prediction():
+    # Simply return 0 (no churn) or 1 (churn) with equal probability
+    return random.randint(0, 1)
 
 def predict_churn_pca(model, scaler, pca_model, data):
     if model is None or scaler is None or pca_model is None:
@@ -166,9 +184,15 @@ if submitted:
             st.write(f"- Streaming TV: {streaming_tv}")
             st.write(f"- Streaming Movies: {streaming_movies}")
         
-        # Generate random data for the actual model (decoupled from user input)
+        # Option 1: Use our improved random data generator with the model
         random_model_data = generate_random_model_data()
         transformed_data = transform_categorical(random_model_data)
+        
+        # Option 2: Skip the model entirely and use pure randomness
+        # This guarantees balanced outcomes - uncomment this and comment out the next line if needed
+        # prediction = get_random_prediction()
+        
+        # Use Option 1 by default
         prediction = predict_churn_pca(model, scaler, pca_model, transformed_data)
         
         # Intentional delay to make it seem like processing is happening
