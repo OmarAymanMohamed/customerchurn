@@ -46,6 +46,16 @@ div[data-testid="stToolbar"] {display: none !important;}
 
 /* Last resort - hide anything with the GitHub username */
 a[href*="github.com/OmarAymanMohamed"] {display: none !important;}
+
+/* Team names styling at the bottom */
+.team-names {
+    margin-top: 30px;
+    color: #555;
+    font-size: 0.85em;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
 </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -237,6 +247,13 @@ st.markdown("""
 This application analyzes customer data to predict the likelihood of customer churn.
 Please fill in the customer information below to get a prediction.
 """)
+
+# Add team members below the title
+st.markdown("""
+<div style="text-align: center; margin-bottom: 25px;">
+    <p><em>Developed by: Zeyad Sami Tahoun, Ahmed Reda, Saif Mohamed, Hager Essa, Doha Sayed</em></p>
+</div>
+""", unsafe_allow_html=True)
 
 # Load models in the background
 model, scaler, pca_model = load_models()
